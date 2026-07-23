@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
+    public $withinTransaction = false;
     public function up(): void
     {
         Schema::table('schedule_items', function (Blueprint $table) {
@@ -13,13 +14,24 @@ return new class extends Migration {
         });
 
         // Backfill from the parent schedule
-        DB::statement('
-            UPDATE schedule_items si
-            JOIN schedules s ON s.uuid = si.schedule_uuid
-            SET si.company_uuid = s.company_uuid
-            WHERE si.company_uuid IS NULL
-              AND si.schedule_uuid IS NOT NULL
-        ');
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement('
+                UPDATE schedule_items si
+                SET company_uuid = s.company_uuid
+                FROM schedules s
+                WHERE s.uuid = si.schedule_uuid
+                  AND si.company_uuid IS NULL
+                  AND si.schedule_uuid IS NOT NULL
+            ');
+        } else {
+            DB::statement('
+                UPDATE schedule_items si
+                JOIN schedules s ON s.uuid = si.schedule_uuid
+                SET si.company_uuid = s.company_uuid
+                WHERE si.company_uuid IS NULL
+                  AND si.schedule_uuid IS NOT NULL
+            ');
+        }
     }
 
     public function down(): void

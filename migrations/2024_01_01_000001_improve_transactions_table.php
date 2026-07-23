@@ -34,6 +34,11 @@ use Illuminate\Support\Facades\Schema;
  *  - Keep owner_uuid/owner_type as deprecated nullable aliases (backfilled)
  */
 return new class extends Migration {
+    // Postgres wraps DDL migrations in a transaction, so the ADD COLUMN would hold
+    // a lock on `transactions` while the backfill UPDATEs (on a separate connection)
+    // block on it -> deadlock. MySQL auto-commits DDL; mirror that here.
+    public $withinTransaction = false;
+
     public function up(): void
     {
         Schema::table('transactions', function (Blueprint $table) {
@@ -137,7 +142,10 @@ return new class extends Migration {
         // --------------------------------------------------------------------
         // Backfill period from created_at
         // --------------------------------------------------------------------
-        DB::statement("UPDATE transactions SET period = DATE_FORMAT(created_at, '%Y-%m') WHERE created_at IS NOT NULL");
+        $periodExpr = DB::connection()->getDriverName() === 'pgsql'
+            ? "to_char(created_at, 'YYYY-MM')"
+            : "DATE_FORMAT(created_at, '%Y-%m')";
+        DB::statement("UPDATE transactions SET period = {$periodExpr} WHERE created_at IS NOT NULL");
 
         // --------------------------------------------------------------------
         // Backfill net_amount = amount (no fees/tax in legacy records)

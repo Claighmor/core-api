@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         Schema::create('custom_field_values', function (Blueprint $table) {
             $table->increments('id');
-            $table->uuid('uuid')->index();
+            $table->uuid('uuid')->index()->unique();
             $table->foreignUuid('company_uuid')->nullable()->index()->references('uuid')->on('companies');
             $table->foreignUuid('custom_field_uuid')->nullable()->index()->references('uuid')->on('custom_fields');
             $table->uuid('subject_uuid');

@@ -10,7 +10,7 @@ class CreateDashboardsTable extends Migration
     {
         Schema::create('dashboards', function (Blueprint $table) {
             $table->id();
-            $table->uuid('uuid')->nullable()->index();
+            $table->uuid('uuid')->nullable()->index()->unique();
             $table->uuid('company_uuid')->nullable()->index();
             $table->uuid('user_uuid')->nullable()->index();
             $table->string('name');

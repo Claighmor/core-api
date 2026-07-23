@@ -124,6 +124,13 @@ class CoreServiceProvider extends ServiceProvider
             return new \Fleetbase\Database\PostgresConnection($connection, $database, $prefix, $config);
         });
 
+        // doctrine/dbal (used by ->change()) declares uuid as native UUID; make it
+        // char(36) to match Fleetbase's uuid storage so nullability-only ->change()
+        // calls on uuid columns don't attempt a char(36)->uuid cast on Postgres.
+        if (class_exists(\Doctrine\DBAL\Types\Type::class) && \Doctrine\DBAL\Types\Type::hasType('guid')) {
+            \Doctrine\DBAL\Types\Type::overrideType('guid', \Fleetbase\Doctrine\CharGuidType::class);
+        }
+
         $this->mergeConfigFrom(__DIR__ . '/../../config/database.connections.php', 'database.connections');
         $this->mergeConfigFrom(__DIR__ . '/../../config/database.redis.php', 'database.redis');
         $this->mergeConfigFrom(__DIR__ . '/../../config/broadcasting.connections.php', 'broadcasting.connections');

@@ -14,7 +14,7 @@ return new class extends Migration {
     {
         Schema::create('custom_fields', function (Blueprint $table) {
             $table->increments('id');
-            $table->uuid('uuid')->index();
+            $table->uuid('uuid')->index()->unique();
             $table->foreignUuid('company_uuid')->nullable()->index()->references('uuid')->on('companies');
             $table->uuid('subject_uuid');
             $table->string('subject_type');

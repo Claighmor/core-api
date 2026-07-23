@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         Schema::create('directives', function (Blueprint $table) {
             $table->increments('id');
-            $table->uuid('uuid')->nullable()->index();
+            $table->uuid('uuid')->nullable()->index()->unique();
             $table->foreignUuid('company_uuid')->nullable()->index()->references('uuid')->on('companies');
             $table->foreignUuid('permission_uuid')->nullable()->index()->references('id')->on('permissions');
             $table->string('subject_type')->nullable();

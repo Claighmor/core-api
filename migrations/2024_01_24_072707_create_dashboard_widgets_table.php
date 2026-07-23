@@ -10,7 +10,7 @@ class CreateDashboardWidgetsTable extends Migration
     {
         Schema::create('dashboard_widgets', function (Blueprint $table) {
             $table->id();
-            $table->uuid('uuid')->nullable()->index();
+            $table->uuid('uuid')->nullable()->index()->unique();
             $table->uuid('dashboard_uuid')->nullable()->index();
             $table->string('name');
             $table->string('component');

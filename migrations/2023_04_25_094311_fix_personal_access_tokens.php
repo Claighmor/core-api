@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\PersonalAccessToken;
 
 return new class extends Migration {
+    public $withinTransaction = false;
     /**
      * Run the migrations.
      *

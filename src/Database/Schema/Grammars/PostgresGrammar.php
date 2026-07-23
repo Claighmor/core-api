@@ -80,7 +80,14 @@ class PostgresGrammar extends BasePostgresGrammar
      */
     public function compileSpatialIndex(Blueprint $blueprint, Fluent $command): string
     {
-        $name = $blueprint->getTable() . '_' . $command->index;
+        // Bare names like "location" are reused across tables (unique per table on
+        // MySQL, but schema-unique on Postgres). Prefix with the table unless the
+        // name already begins with it (explicit names like devices_..._spx).
+        $table = $blueprint->getTable();
+        $name  = $command->index;
+        if (strpos($name, $table . '_') !== 0) {
+            $name = $table . '_' . $name;
+        }
 
         return sprintf(
             'create index %s on %s using gist (%s)',

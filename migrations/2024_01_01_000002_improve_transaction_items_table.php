@@ -20,6 +20,9 @@ use Illuminate\Support\Facades\Schema;
  *  - Add sort_order (for ordered line item display)
  */
 return new class extends Migration {
+    // Mixed DDL + backfill: avoid the Postgres DDL-lock vs UPDATE deadlock.
+    public $withinTransaction = false;
+
     public function up(): void
     {
         Schema::table('transaction_items', function (Blueprint $table) {
@@ -43,7 +46,11 @@ return new class extends Migration {
 
         // Fix amount column: string → integer
         // First copy to a temp column, then drop and re-add as integer
-        DB::statement('ALTER TABLE transaction_items MODIFY COLUMN amount BIGINT NOT NULL DEFAULT 0');
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE transaction_items ALTER COLUMN amount TYPE BIGINT USING amount::bigint, ALTER COLUMN amount SET NOT NULL, ALTER COLUMN amount SET DEFAULT 0');
+        } else {
+            DB::statement('ALTER TABLE transaction_items MODIFY COLUMN amount BIGINT NOT NULL DEFAULT 0');
+        }
 
         // Backfill unit_price = amount for existing records (single-unit assumption)
         DB::statement('UPDATE transaction_items SET unit_price = amount WHERE unit_price = 0 AND amount > 0');
@@ -52,7 +59,11 @@ return new class extends Migration {
     public function down(): void
     {
         // Revert amount back to string (original type)
-        DB::statement('ALTER TABLE transaction_items MODIFY COLUMN amount VARCHAR(191) NULL');
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            DB::statement('ALTER TABLE transaction_items ALTER COLUMN amount TYPE VARCHAR(191) USING amount::text, ALTER COLUMN amount DROP NOT NULL, ALTER COLUMN amount DROP DEFAULT');
+        } else {
+            DB::statement('ALTER TABLE transaction_items MODIFY COLUMN amount VARCHAR(191) NULL');
+        }
 
         Schema::table('transaction_items', function (Blueprint $table) {
             $table->dropUnique(['public_id']);

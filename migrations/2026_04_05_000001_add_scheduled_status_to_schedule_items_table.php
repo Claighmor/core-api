@@ -16,6 +16,16 @@ use Illuminate\Support\Facades\DB;
 return new class extends Migration {
     public function up(): void
     {
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            // Laravel stores enums as varchar + CHECK on Postgres; adjust the check + default.
+            DB::statement('ALTER TABLE schedule_items DROP CONSTRAINT IF EXISTS schedule_items_status_check');
+            DB::statement("ALTER TABLE schedule_items ADD CONSTRAINT schedule_items_status_check CHECK (status IN ('pending','scheduled','confirmed','in_progress','completed','cancelled','no_show'))");
+            DB::statement("ALTER TABLE schedule_items ALTER COLUMN status SET DEFAULT 'scheduled'");
+            DB::statement('ALTER TABLE schedule_items ALTER COLUMN status SET NOT NULL');
+
+            return;
+        }
+
         DB::statement("
             ALTER TABLE `schedule_items`
             MODIFY COLUMN `status`

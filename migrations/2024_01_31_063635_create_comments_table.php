@@ -14,7 +14,7 @@ return new class extends Migration {
     {
         Schema::create('comments', function (Blueprint $table) {
             $table->increments('id');
-            $table->uuid('uuid')->nullable()->index();
+            $table->uuid('uuid')->nullable()->unique();
             $table->string('public_id')->nullable()->unique();
             $table->foreignUuid('company_uuid')->references('uuid')->on('companies')->onUpdate('CASCADE')->onDelete('CASCADE');
             $table->foreignUuid('author_uuid')->references('uuid')->on('users')->onUpdate('CASCADE')->onDelete('CASCADE');

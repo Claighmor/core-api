@@ -14,7 +14,7 @@ return new class extends Migration {
     {
         Schema::create(config('activitylog.table_name'), function (Blueprint $table) {
             $table->increments('id');
-            $table->uuid('uuid')->nullable();
+            $table->uuid('uuid')->nullable()->unique();
             $table->string('log_name')->nullable()->index();
             $table->text('description');
             $table->uuid('company_id')->nullable()->index();
