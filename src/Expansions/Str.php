@@ -49,10 +49,17 @@ class Str implements Expansion
     {
         return function (string $url) {
             $parsedUrl = parse_url($url);
-            $host      = explode('.', $parsedUrl['host']);
-            $domain    = $host[count($host) - 2] . '.' . $host[count($host) - 1];
+            $hostname  = $parsedUrl['host'] ?? $url;
+            $host      = explode('.', $hostname);
+            $count     = count($host);
 
-            return $domain;
+            // Single-label hosts (e.g. "localhost") have no registrable domain;
+            // return the hostname as-is instead of indexing $host[-1].
+            if ($count < 2) {
+                return $hostname;
+            }
+
+            return $host[$count - 2] . '.' . $host[$count - 1];
         };
     }
 }

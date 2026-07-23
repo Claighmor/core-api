@@ -39,7 +39,15 @@ class CreateDatabase extends Command
      */
     public function handle()
     {
-        $connection         = config('fleetbase.connection.db');
+        // On PostgreSQL there is one physical database (already provisioned, e.g.
+        // Supabase). "Databases" here become SCHEMAS scoped by search_path, so we
+        // CREATE SCHEMA instead of CREATE DATABASE and never detach the database.
+        if (config('database.connections.mysql.driver') === 'pgsql') {
+            $this->createPostgresSchemas();
+
+            return;
+        }
+
         $_schemaName        = $this->option('schemaName');
         $connections        = ['mysql', 'sandbox'];
         $packageConnections = Utils::fromFleetbaseExtensions('create-database');
@@ -64,6 +72,24 @@ class CreateDatabase extends Command
             DB::statement($query);
 
             config(['database.connections.mysql.database' => $schemaName]);
+        }
+    }
+
+    /**
+     * PostgreSQL: ensure the schemas each named connection resolves against
+     * exist (public is present by default; sandbox is created), and that PostGIS
+     * is available for the FleetOps spatial columns. Idempotent.
+     */
+    protected function createPostgresSchemas(): void
+    {
+        DB::statement('CREATE EXTENSION IF NOT EXISTS postgis;');
+
+        foreach (['mysql', 'sandbox'] as $connection) {
+            $schema = config("database.connections.$connection.search_path");
+            if (!empty($schema) && $schema !== 'public') {
+                DB::statement('CREATE SCHEMA IF NOT EXISTS "' . $schema . '";');
+                $this->info("Ensured schema '{$schema}' exists.");
+            }
         }
     }
 }
