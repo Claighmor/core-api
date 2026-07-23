@@ -20,7 +20,7 @@ return new class extends Migration {
         }
 
         Schema::create($tableNames['permissions'], function (Blueprint $table) {
-            $table->uuid('id')->index();
+            $table->uuid('id')->primary();
             $table->string('name');
             $table->string('guard_name');
             $table->timestamps();
@@ -29,7 +29,7 @@ return new class extends Migration {
         });
 
         Schema::create($tableNames['roles'], function (Blueprint $table) {
-            $table->uuid('id')->index();
+            $table->uuid('id')->primary();
             $table->string('name');
             $table->string('guard_name');
             $table->timestamps();

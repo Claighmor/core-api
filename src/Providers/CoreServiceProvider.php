@@ -117,6 +117,13 @@ class CoreServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        // Use Fleetbase's Postgres connection (uuid -> char(36) schema grammar) so
+        // char(36) PKs and ->uuid() FK columns share a type on Postgres as they do
+        // on MySQL. No-op on MySQL.
+        \Illuminate\Database\Connection::resolverFor('pgsql', function ($connection, $database, $prefix, $config) {
+            return new \Fleetbase\Database\PostgresConnection($connection, $database, $prefix, $config);
+        });
+
         $this->mergeConfigFrom(__DIR__ . '/../../config/database.connections.php', 'database.connections');
         $this->mergeConfigFrom(__DIR__ . '/../../config/database.redis.php', 'database.redis');
         $this->mergeConfigFrom(__DIR__ . '/../../config/broadcasting.connections.php', 'broadcasting.connections');
